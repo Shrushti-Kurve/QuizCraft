@@ -1,15 +1,11 @@
-# quiz_gen.py
-import json, os
+import json, os, random
 from dotenv import load_dotenv
 
 load_dotenv()
 genai_key = os.getenv("GOOGLE_API_KEY")
 use_google_api = os.getenv("USE_GOOGLE_API") == "1"
 
-
 def _local_generate(prompt: str, num_q: int) -> str:
-  # Offline fallback: build a valid JSON quiz without external APIs or model downloads.
-  # This keeps the app usable when Gemini is blocked or billing is unavailable.
   topic_line = next((line for line in prompt.splitlines() if line.strip().startswith("Topic:")), "Topic: General")
   topic = topic_line.split(":", 1)[1].strip() or "General"
 
@@ -24,20 +20,19 @@ def _local_generate(prompt: str, num_q: int) -> str:
   items = []
   for i in range(num_q):
     q_tpl, correct, b, c, d = templates[i % len(templates)]
-    # rotate incorrect options so the quiz doesn't feel identical each time
     wrong_options = [b, c, d]
     rotated = wrong_options[i % 3 :] + wrong_options[: i % 3]
-    options = {
-      "A": correct,
-      "B": rotated[0],
-      "C": rotated[1],
-      "D": rotated[2],
-    }
+    opts = [correct] + rotated
+    random.shuffle(opts)
+    letters = ["A", "B", "C", "D"]
+    options = {letters[j]: opts[j] for j in range(4)}
+    correct_letter = next(k for k, v in options.items() if v == correct)
+    explanation = f"{correct}. In {topic}, focus on understanding the concept and practicing applied problems to master it."
     items.append({
       "question": q_tpl.format(topic=topic),
       "options": options,
-      "correct_answer": "A",
-      "explanation": f"For {topic}, the important idea is to understand the concept and apply it to real problems.",
+      "correct_answer": correct_letter,
+      "explanation": explanation,
     })
 
   return json.dumps(items)
@@ -65,7 +60,6 @@ def generate_quiz(topic, branch, num_q=5):
   ]
   """
 
-  # Try Google Generative API if key is present
   if genai_key and use_google_api:
     try:
       import google.generativeai as genai
@@ -79,13 +73,24 @@ def generate_quiz(topic, branch, num_q=5):
       text = response.text.strip()
       text = text.replace("```json", "").replace("```", "").strip()
       try:
-        return json.loads(text), None
+        parsed = json.loads(text)
+        # basic validation
+        if isinstance(parsed, list) and parsed:
+          valid = True
+          for it in parsed:
+            if not all(k in it for k in ("question", "options", "correct_answer", "explanation")):
+              valid = False
+              break
+            if not isinstance(it.get("options"), dict) or len(it["options"]) != 4:
+              valid = False
+              break
+          if valid:
+            return parsed, None
       except Exception:
         pass
     except Exception:
       pass
 
-  # Local fallback
   try:
     text = _local_generate(prompt, num_q)
     text = text.replace("```json", "").replace("```", "").strip()

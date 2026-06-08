@@ -81,13 +81,19 @@ if st.session_state.submitted:
     for i, q in enumerate(st.session_state.questions):
         ua = st.session_state.answers.get(i, "")
         ca = q["correct_answer"]
-        
+
         if ua == ca:
             st.success(f"✅ Q{i+1}: Correct")
             correct += 1
         else:
-            st.error(f"❌ Q{i+1}: You chose {ua} — Correct: {ca}")
+            ua_text = q["options"].get(ua, ua)
+            ca_text = q["options"].get(ca, ca)
+            st.error(f"❌ Q{i+1}: You chose {ua}: {ua_text} — Correct: {ca}: {ca_text}")
             with st.expander("💡 Explanation"):
+                st.write("**Question:**", q["question"])
+                st.write("**Your answer:**", f"{ua}: {ua_text}")
+                st.write("**Correct answer:**", f"{ca}: {ca_text}")
+                st.write("")
                 st.write(q["explanation"])
             wrong_qs.append(q["question"])
     
