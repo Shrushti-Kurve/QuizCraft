@@ -20,18 +20,15 @@ st.divider()
 
 # ── Input ──
 if not st.session_state.questions or st.session_state.submitted:
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        topic = st.text_input("Topic",
-                              placeholder="e.g. Random Forest, SQL Joins, Recursion")
-    with col2:
-        branch = st.selectbox("Branch", list(TOPICS.keys()))
+    topic = st.text_input("Topic",
+                          placeholder="e.g. Random Forest, SQL Joins, Recursion")
     
     num_q = st.slider("Number of questions", 3, 10, 5)
     
     if st.button("🎯 Generate Quiz", type="primary", use_container_width=True):
         if topic:
             with st.spinner("Generating questions with AI..."):
+                branch = st.session_state.branch or "Data Science"
                 qs, err = generate_quiz(topic, branch, num_q)
             if qs:
                 st.session_state.questions = qs
