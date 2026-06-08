@@ -38,10 +38,9 @@ def _local_generate(prompt: str, num_q: int) -> str:
   return json.dumps(items)
 
 
-def generate_quiz(topic, branch, num_q=5):
+def generate_quiz(topic, num_q=5):
   prompt = f"""
   Generate {num_q} MCQ questions for a college student.
-  Branch: {branch}
   Topic: {topic}
 
   Rules:

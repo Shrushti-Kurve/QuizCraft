@@ -29,7 +29,7 @@ def load_classifier():
         return None
 
 
-def _keyword_fallback(wrong_questions, branch):
+def _keyword_fallback(wrong_questions, branch=None):
     topics = TOPICS.get(branch, ["Theory", "Concepts", "Problem Solving"])
     scores = {topic: 0 for topic in topics}
     text = " ".join(wrong_questions).lower()
@@ -48,7 +48,7 @@ def _keyword_fallback(wrong_questions, branch):
 
     return [(topic, 1) for topic in topics[:3]]
 
-def detect_weak_areas(wrong_questions, branch):
+def detect_weak_areas(wrong_questions, branch=None):
     if not wrong_questions:
         return []
     

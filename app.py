@@ -1,14 +1,14 @@
 # app.py
 import streamlit as st
 from quiz_gen import generate_quiz
-from nlp import detect_weak_areas, TOPICS
+from nlp import detect_weak_areas
 
 st.set_page_config(page_title="QuizCraft", page_icon="📝", layout="centered")
 
 # Session state init
 for k, v in {
     "questions": None, "answers": {}, "submitted": False,
-    "topic": "", "branch": "Data Science"
+    "topic": ""
 }.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -28,12 +28,10 @@ if not st.session_state.questions or st.session_state.submitted:
     if st.button("🎯 Generate Quiz", type="primary", use_container_width=True):
         if topic:
             with st.spinner("Generating questions with AI..."):
-                branch = st.session_state.branch or "Data Science"
-                qs, err = generate_quiz(topic, branch, num_q)
+                qs, err = generate_quiz(topic, num_q)
             if qs:
                 st.session_state.questions = qs
                 st.session_state.topic     = topic
-                st.session_state.branch    = branch
                 st.session_state.answers   = {}
                 st.session_state.submitted = False
                 st.rerun()
@@ -110,7 +108,7 @@ if st.session_state.submitted:
         st.write("Based on what you got wrong, focus on these:")
         
         with st.spinner("Analysing with NLP..."):
-            weak = detect_weak_areas(wrong_qs, st.session_state.branch)
+            weak = detect_weak_areas(wrong_qs)
         
         if weak:
             for i, (topic_w, _) in enumerate(weak, 1):
